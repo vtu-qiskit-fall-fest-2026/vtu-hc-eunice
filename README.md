@@ -67,7 +67,9 @@ statement from the brief if one applies.
 -->
 
 **Problem:** Designing novel metal-organic frameworks (MOFs) and amine-functionalized solid sorbents for Direct Air Carbon Capture (DAC) is severely bottlenecked by the exponential scaling ($O(2^N)$) of exact electronic structure simulations on classical computers. Classical approximations like Density Functional Theory (DFT) fail to accurately resolve strong electron-electron correlations at $\text{CO}_2$ chemisorption and open-metal coordination sites, turning material discovery into years of costly wet-lab trial and error.
+
 **Why it matters:** Discovering carbon-capture catalysts that bind $\text{CO}_2$ within the optimal thermodynamic window ($-35\text{ to }-95\text{ kJ/mol}$) lowers the thermal regeneration penalty below $100^\circ\text{C}$, making gigaton-scale atmospheric carbon removal economically viable.
+
 **Track / Category:** Both · Track 6 · Quantum Applications for Climate Change & Sustainability
 
 ---
@@ -108,11 +110,6 @@ flowchart LR
 5. **Output** — Ground-state energy ($\text{Ha}$), quantum error ($\text{mHa}$), $\text{CO}_2$ binding enthalpy ($\text{kJ/mol}$), automated DAC thermodynamic classification, live Potential Energy Surface ($E(R)$) curve, and transpiled Qiskit circuit diagram.
 
 ---
-Candidate Complex,Qubits,Req​ (A˚),VQE Energy (Ha),Exact FCI (Ha),Error (mHa),Binding ΔH (kJ/mol),DAC Verdict
-CO2_Amine,4Q,1.480,-189.724492,-189.725577,1.085 mHa (PASSED),-65.62 kJ/mol,OPTIMAL DAC SORBENT
-Mg_MOF74_CO2,4Q,2.050,-247.177815,-247.178500,0.685 mHa (PASSED),-45.46 kJ/mol,OPTIMAL DAC SORBENT
-LiH,4Q,1.595,-9.454612,-9.455400,0.788 mHa (PASSED),-110.30 kJ/mol,Strong Chemisorption
-H2,2Q,0.735,-1.857275,-1.857275,0.001 mHa (PASSED),-458.15 kJ/mol,Calibration Benchmark
 
 ---
 ## 🛠️ Tech Stack
