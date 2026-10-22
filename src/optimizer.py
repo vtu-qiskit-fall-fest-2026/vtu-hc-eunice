@@ -1,4 +1,4 @@
-﻿"""
+"""
 Q-Catalyst Variational Quantum Eigensolver (VQE) & Carbon Capture Analytics.
 """
 
@@ -49,7 +49,7 @@ def run_vqe_simulation(
     molecule_key: str = "CO2_Amine",
     bond_distance: float | None = None,
     reps: int = 2,
-    maxiter: int = 120,
+    maxiter: int = 110,
     seed: int = 42,
 ) -> Dict[str, Any]:
     t0 = time.perf_counter()
@@ -67,7 +67,7 @@ def run_vqe_simulation(
 
     convergence_history: List[Dict[str, float]] = []
     rng = np.random.default_rng(seed)
-    initial_params = rng.uniform(-0.15, 0.15, size=ansatz.num_parameters)
+    initial_params = rng.normal(0.0, 0.22, size=ansatz.num_parameters)
 
     def cost_function(params: np.ndarray) -> float:
         bound_qc = ansatz.assign_parameters(params)
@@ -88,7 +88,7 @@ def run_vqe_simulation(
         cost_function,
         initial_params,
         method="COBYLA",
-        options={"maxiter": maxiter, "tol": 1e-6},
+        options={"maxiter": maxiter, "rhobeg": 0.25, "tol": 1e-6},
     )
 
     optimal_params = opt_result.x
@@ -96,9 +96,8 @@ def run_vqe_simulation(
     error_mha = abs(vqe_energy - exact_energy) * 1000.0
     chemical_accuracy_met = bool(error_mha <= 1.6)
 
-    h_inf, nuc_inf, _ = build_molecular_hamiltonian(molecule_key, bond_distance=3.5)
-    asymptotic_energy = compute_exact_ground_state(h_inf, nuc_inf)
-    binding_energy_ha = vqe_energy - asymptotic_energy
+    # Binding energy relative to dissociated asymptote
+    binding_energy_ha = vqe_energy - meta["asymptote_ha"]
     binding_enthalpy_kj_mol = binding_energy_ha * HARTREE_TO_KJ_MOL
 
     optimal_qc = ansatz.assign_parameters(optimal_params)
@@ -147,7 +146,7 @@ def scan_potential_energy_surface(
             molecule_key=molecule_key,
             bond_distance=float(d),
             reps=reps,
-            maxiter=80,
+            maxiter=75,
         )
         surface_points.append(
             {

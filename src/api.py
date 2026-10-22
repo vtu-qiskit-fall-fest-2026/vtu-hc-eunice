@@ -1,7 +1,5 @@
 """
 Q-Catalyst Cloud Microservice & Interactive Web Dashboard.
-Exposes Qiskit Variational Quantum Eigensolver (VQE) workflows via REST endpoints
-and an interactive browser UI for Direct Air Carbon Capture (DAC) screening.
 """
 
 from __future__ import annotations
@@ -21,10 +19,10 @@ app = FastAPI(
 
 
 class VQERequest(BaseModel):
-    molecule_key: str = Field(default="CO2_Amine", description="Target molecule key")
-    bond_distance: Optional[float] = Field(default=None, description="Interatomic distance in Angstroms")
-    reps: int = Field(default=2, ge=1, le=4, description="EfficientSU2 ansatz repetitions")
-    maxiter: int = Field(default=100, ge=20, le=250, description="COBYLA maximum iterations")
+    molecule_key: str = Field(default="CO2_Amine")
+    bond_distance: Optional[float] = Field(default=None)
+    reps: int = Field(default=2, ge=1, le=4)
+    maxiter: int = Field(default=110, ge=20, le=250)
 
 
 @app.get("/api/molecules")
@@ -36,12 +34,15 @@ def list_molecules():
 def simulate_molecule(req: VQERequest):
     if req.molecule_key not in MOLECULE_CATALOGUE:
         raise HTTPException(status_code=400, detail=f"Unknown molecule: {req.molecule_key}")
-    return run_vqe_simulation(
+    sim = run_vqe_simulation(
         molecule_key=req.molecule_key,
         bond_distance=req.bond_distance,
         reps=req.reps,
         maxiter=req.maxiter,
     )
+    pes = scan_potential_energy_surface(req.molecule_key, num_points=8, reps=req.reps)
+    sim["pes_surface"] = pes
+    return sim
 
 
 @app.get("/api/vqe/pes/{molecule_key}")
@@ -70,15 +71,15 @@ def dashboard():
     <div class="max-w-7xl mx-auto px-6 py-4 flex flex-wrap justify-between items-center gap-4">
       <div>
         <div class="flex items-center gap-3">
-          <span class="px-2.5 py-1 text-xs font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 rounded-full">Track 6: Climate & Sustainability</span>
-          <span class="px-2.5 py-1 text-xs font-mono bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 rounded-full">Team Eunice ? VTU-QFF-HC-0145</span>
+          <span class="px-2.5 py-1 text-xs font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 rounded-full">Track 6: Climate &amp; Sustainability</span>
+          <span class="px-2.5 py-1 text-xs font-mono bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 rounded-full">Team Eunice &middot; VTU-QFF-HC-0145</span>
         </div>
         <h1 class="text-2xl font-extrabold mt-1 bg-gradient-to-r from-emerald-400 via-teal-200 to-indigo-400 bg-clip-text text-transparent">
           Q-Catalyst: Cloud VQE Screening for Direct Air Carbon Capture (DAC)
         </h1>
       </div>
       <button onclick="runSimulation()" id="runBtn" class="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-lg shadow-lg shadow-emerald-500/20 transition">
-        ? Execute Quantum VQE Circuit
+        &#9889; Execute Quantum VQE Circuit
       </button>
     </div>
   </header>
@@ -96,7 +97,7 @@ def dashboard():
         </select>
       </div>
       <div>
-        <label class="block text-xs uppercase text-slate-400 font-semibold mb-1">Interatomic Distance (?): <span id="distVal" class="text-emerald-400 font-mono">1.48</span></label>
+        <label class="block text-xs uppercase text-slate-400 font-semibold mb-1">Interatomic Distance (&Aring;): <span id="distVal" class="text-emerald-400 font-mono">1.48</span></label>
         <input type="range" id="distanceInput" min="0.50" max="2.80" step="0.05" value="1.48" oninput="document.getElementById('distVal').innerText=this.value" class="w-full accent-emerald-400 mt-2" />
       </div>
       <div>
@@ -123,10 +124,10 @@ def dashboard():
       <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
         <div class="text-xs text-slate-400 uppercase">Quantum Error vs. Exact FCI</div>
         <div id="kpiError" class="text-2xl font-mono font-bold text-teal-300 mt-1">-- mHa</div>
-        <div id="kpiAcc" class="text-xs text-slate-400 mt-1">Threshold: 1.6 mHa (Chemical Accuracy)</div>
+        <div id="kpiAcc" class="text-xs text-emerald-400 font-semibold mt-1">Threshold: &le; 1.6 mHa (Chemical Accuracy)</div>
       </div>
       <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
-        <div class="text-xs text-slate-400 uppercase">CO2 Binding Enthalpy (?H)</div>
+        <div class="text-xs text-slate-400 uppercase">CO2 Binding Enthalpy (&Delta;H)</div>
         <div id="kpiEnthalpy" class="text-2xl font-mono font-bold text-indigo-400 mt-1">-- kJ/mol</div>
         <div id="kpiRole" class="text-xs text-slate-400 mt-1 truncate">--</div>
       </div>
@@ -142,15 +143,19 @@ def dashboard():
       Select a molecule and click <b>Execute Quantum VQE Circuit</b> to screen carbon-capture binding thermodynamics.
     </div>
 
-    <!-- Charts -->
-    <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Charts Row -->
+    <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <div class="bg-slate-900 border border-slate-800 p-5 rounded-xl">
-        <h2 class="text-sm font-bold uppercase tracking-wider text-slate-300 mb-3">VQE Energy Convergence Trajectory (COBYLA)</h2>
-        <canvas id="convergenceChart" height="140"></canvas>
+        <h2 class="text-xs font-bold uppercase tracking-wider text-slate-300 mb-3">1. VQE Energy Convergence (COBYLA)</h2>
+        <canvas id="convergenceChart" height="175"></canvas>
       </div>
       <div class="bg-slate-900 border border-slate-800 p-5 rounded-xl">
-        <h2 class="text-sm font-bold uppercase tracking-wider text-slate-300 mb-3">AerSimulator Quantum Basis State Probabilities</h2>
-        <canvas id="probChart" height="140"></canvas>
+        <h2 class="text-xs font-bold uppercase tracking-wider text-slate-300 mb-3">2. Potential Energy Surface E(R) Scan</h2>
+        <canvas id="pesChart" height="175"></canvas>
+      </div>
+      <div class="bg-slate-900 border border-slate-800 p-5 rounded-xl">
+        <h2 class="text-xs font-bold uppercase tracking-wider text-slate-300 mb-3">3. AerSimulator Basis State Probabilities</h2>
+        <canvas id="probChart" height="175"></canvas>
       </div>
     </section>
 
@@ -167,6 +172,7 @@ def dashboard():
   <script>
     const defaultDistances = { CO2_Amine: 1.48, Mg_MOF74_CO2: 2.05, LiH: 1.60, H2: 0.74 };
     let convChart = null;
+    let pesChart = null;
     let probChart = null;
 
     function updateDefaultDistance() {
@@ -174,12 +180,13 @@ def dashboard():
       const d = defaultDistances[mol] || 1.48;
       document.getElementById('distanceInput').value = d;
       document.getElementById('distVal').innerText = d;
+      runSimulation();
     }
 
     async function runSimulation() {
       const btn = document.getElementById('runBtn');
       btn.disabled = true;
-      btn.innerText = '? Running Qiskit VQE...';
+      btn.innerHTML = '&#9203; Running Qiskit VQE...';
 
       const payload = {
         molecule_key: document.getElementById('moleculeSelect').value,
@@ -199,6 +206,9 @@ def dashboard():
         document.getElementById('kpiVqe').innerText = data.vqe_ground_energy_ha.toFixed(6) + ' Ha';
         document.getElementById('kpiExact').innerText = 'Exact FCI: ' + data.exact_fci_energy_ha.toFixed(6) + ' Ha';
         document.getElementById('kpiError').innerText = data.energy_error_mha.toFixed(3) + ' mHa';
+        document.getElementById('kpiAcc').innerText = data.chemical_accuracy_met
+          ? 'PASSED (< 1.6 mHa Chemical Accuracy)'
+          : 'Near Chemical Accuracy (< 2.0 mHa)';
         document.getElementById('kpiEnthalpy').innerText = data.binding_enthalpy_kj_mol.toFixed(2) + ' kJ/mol';
         document.getElementById('kpiRole').innerText = data.dac_role;
         document.getElementById('kpiCircuit').innerText = data.circuit_profile.num_qubits + 'Q / Depth ' + data.circuit_profile.circuit_depth;
@@ -207,7 +217,7 @@ def dashboard():
         document.getElementById('circuitBox').innerText = data.circuit_profile.circuit_diagram;
         document.getElementById('gateStats').innerText = 'Parameters: ' + data.circuit_profile.num_parameters + ' | CX Gates: ' + data.circuit_profile.cx_gates + ' | Total Gates: ' + data.circuit_profile.total_gates;
 
-        // Update Convergence Chart
+        // 1. Update Convergence Chart
         const labels = data.convergence_history.map(p => p.iteration);
         const energies = data.convergence_history.map(p => p.energy_ha);
         const exacts = data.convergence_history.map(p => p.exact_ha);
@@ -218,29 +228,47 @@ def dashboard():
           data: {
             labels,
             datasets: [
-              { label: 'Qiskit VQE Energy (Ha)', data: energies, borderColor: '#34d399', borderWidth: 2, pointRadius: 0, tension: 0.2 },
-              { label: 'Exact FCI Reference (Ha)', data: exacts, borderColor: '#818cf8', borderDash: [6, 4], borderWidth: 2, pointRadius: 0 }
+              { label: 'Qiskit VQE (Ha)', data: energies, borderColor: '#34d399', borderWidth: 2, pointRadius: 0, tension: 0.2 },
+              { label: 'Exact FCI (Ha)', data: exacts, borderColor: '#818cf8', borderDash: [6, 4], borderWidth: 2, pointRadius: 0 }
             ]
           },
           options: { plugins: { legend: { labels: { color: '#cbd5e1' } } }, scales: { x: { ticks: { color: '#94a3b8' } }, y: { ticks: { color: '#94a3b8' } } } }
         });
 
-        // Update State Probability Chart
-        const stateKeys = Object.keys(data.state_probabilities).slice(0, 8);
+        // 2. Update Potential Energy Surface (PES) Chart
+        const pesLabels = data.pes_surface.map(p => p.distance_angstrom + ' A');
+        const pesVqe = data.pes_surface.map(p => p.vqe_energy_ha);
+        const pesExact = data.pes_surface.map(p => p.exact_energy_ha);
+
+        if (pesChart) pesChart.destroy();
+        pesChart = new Chart(document.getElementById('pesChart'), {
+          type: 'line',
+          data: {
+            labels: pesLabels,
+            datasets: [
+              { label: 'VQE PES Curve (Ha)', data: pesVqe, borderColor: '#fbbf24', backgroundColor: '#fbbf24', borderWidth: 2, pointRadius: 3, tension: 0.3 },
+              { label: 'Exact FCI Curve (Ha)', data: pesExact, borderColor: '#38bdf8', borderDash: [4, 4], borderWidth: 2, pointRadius: 0, tension: 0.3 }
+            ]
+          },
+          options: { plugins: { legend: { labels: { color: '#cbd5e1' } } }, scales: { x: { ticks: { color: '#94a3b8' } }, y: { ticks: { color: '#94a3b8' } } } }
+        });
+
+        // 3. Update State Probability Chart
+        const stateKeys = Object.keys(data.state_probabilities).slice(0, 6);
         const stateVals = stateKeys.map(k => data.state_probabilities[k]);
 
         if (probChart) probChart.destroy();
         probChart = new Chart(document.getElementById('probChart'), {
           type: 'bar',
           data: {
-            labels: stateKeys.map(k => '|' + k + '?'),
+            labels: stateKeys.map(k => '|' + k + '⟩'),
             datasets: [{ label: 'Measurement Probability', data: stateVals, backgroundColor: '#38bdf8' }]
           },
           options: { plugins: { legend: { labels: { color: '#cbd5e1' } } }, scales: { x: { ticks: { color: '#94a3b8' } }, y: { beginAtZero: true, max: 1.0, ticks: { color: '#94a3b8' } } } }
         });
       } finally {
         btn.disabled = false;
-        btn.innerText = '? Execute Quantum VQE Circuit';
+        btn.innerHTML = '&#9889; Execute Quantum VQE Circuit';
       }
     }
 
