@@ -1,13 +1,12 @@
-# Core quantum SDK
+﻿# Core quantum SDK
 qiskit>=1.0,<2.0
 qiskit-ibm-runtime>=0.30
 
 # Local simulator
 qiskit-aer>=0.15
 
-# Optional add-ons -- remove the ones you do not use
+# Quantum algorithms & chemistry add-ons
 qiskit-algorithms>=0.3
-qiskit-optimization>=0.6
 qiskit-nature>=0.7
 
 # Numerics, data and plotting
@@ -16,6 +15,11 @@ scipy>=1.11
 pandas>=2.1
 matplotlib>=3.8
 scikit-learn>=1.4
+
+# Cloud API & Interactive Dashboard
+fastapi>=0.110.0
+uvicorn>=0.29.0
+pydantic>=2.0
 
 # Testing
 pytest>=8.0
