@@ -66,7 +66,7 @@ who experiences it, and why does it matter. Link to the official problem
 statement from the brief if one applies.
 -->
 
-**Problem:** Designing novel metal-organic frameworks (MOFs) and amine-functionalized solid sorbents for Direct Air Carbon Capture (DAC) is severely bottlenecked by the exponential scaling ($O(2^N)$) of exact electronic structure simulations on classical computers. Classical approximations like Density Functional Theory (DFT) fail to accurately resolve strong electron-electron correlations at $\text{CO}_2$ chemisorption and open-metal coordination sites, turning material discovery into years of costly wet-lab trial and error.
+**Problem:** Designing novel metal-organic frameworks (MOFs) and amine-functionalized solid sorbents for Direct Air Carbon Capture (DAC) is severely bottlenecked by the exponential scaling (O(2^N)) of exact electronic structure simulations on classical computers. Classical approximations like Density Functional Theory (DFT) fail to accurately resolve strong electron-electron correlations at $\text{CO}_2$ chemisorption and open-metal coordination sites, turning material discovery into years of costly wet-lab trial and error.
 
 **Why it matters:** Discovering carbon-capture catalysts that bind $\text{CO}_2$ within the optimal thermodynamic window ($-35\text{ to }-95\text{ kJ/mol}$) lowers the thermal regeneration penalty below $100^\circ\text{C}$, making gigaton-scale atmospheric carbon removal economically viable.
 
@@ -81,7 +81,7 @@ Describe your solution. Keep it concrete: the core idea, the user flow, and
 the quantum/ML technique you are applying.
 -->
 
-**Solution:** **Q-Catalyst** is an interactive Quantum Chemistry-as-a-Service (QCaaS) screening workflow and FastAPI cloud dashboard built using Qiskit and Qiskit Aer. Users select candidate carbon-capture molecules (`CO2_Amine`, `Mg_MOF74_CO2`, `LiH`, `H2`) and interatomic bond distances ($R$), and the platform executes a hybrid Variational Quantum Eigensolver (VQE) loop to compute ground-state energies, Potential Energy Surface ($E(R)$) dissociation curves, and $\text{CO}_2$ adsorption enthalpies ($\Delta H$).
+**Solution:** **Q-Catalyst** is an interactive Quantum Chemistry-as-a-Service (QCaaS) screening workflow and FastAPI cloud dashboard built using Qiskit and Qiskit Aer. Users select candidate carbon-capture molecules (`CO2_Amine`, `Mg_MOF74_CO2`, `LiH`, `H2`) and interatomic bond distances (R), and the platform executes a hybrid Variational Quantum Eigensolver (VQE) loop to compute ground-state energies, Potential Energy Surface (E(R)) dissociation curves, and $\text{CO}_2$ adsorption enthalpies ($\Delta H$).
 
 **Key idea:** Map active-space molecular Hamiltonians into Jordan-Wigner / Parity Pauli strings (`SparsePauliOp`) and minimize $\langle \psi(\vec{\theta}) \vert{} \hat{H} \vert{} \psi(\vec{\theta}) \rangle$ using a Hartree-Fock initialized `EfficientSU2` variational quantum circuit paired with classical `COBYLA` optimization.
 
@@ -110,6 +110,7 @@ flowchart LR
 5. **Output** — Ground-state energy ($\text{Ha}$), quantum error ($\text{mHa}$), $\text{CO}_2$ binding enthalpy ($\text{kJ/mol}$), automated DAC thermodynamic classification, live Potential Energy Surface ($E(R)$) curve, and transpiled Qiskit circuit diagram.
 
 ---
+**YouTube Working Prototype Demo Video**: https://youtu.be/0Jp-Pi0U6mI?si=0bRDJmIufv-eJgIo
 
 ---
 ## 🛠️ Tech Stack
