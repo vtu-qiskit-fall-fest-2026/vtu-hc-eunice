@@ -273,15 +273,15 @@ git pull --rebase       # update your branch on top of main
 
 ## ✅ Submission Checklist
 
-- [ ] Repository created and **public**
-- [ ] All team members added as **collaborators** and invitations accepted
-- [ ] `README.md` updated with project details, problem statement and solution
-- [ ] Team members listed under [Team Members](#-team-members-github-ids)
-- [ ] `requirements.txt` committed and project runs from a clean clone
-- [ ] Code pushed to `main` and the latest `main` builds successfully
-- [ ] Notebooks committed with **cleared outputs** (or use `nbstrip`)
-- [ ] `README` includes a demo screenshot / video link
-- [ ] Short project summary submitted on the hackathon portal
+- [✅] Repository created and **public**
+- [✅] All team members added as **collaborators** and invitations accepted
+- [✅] `README.md` updated with project details, problem statement and solution
+- [✅] Team members listed under [Team Members](#-team-members-github-ids)
+- [✅] `requirements.txt` committed and project runs from a clean clone
+- [✅] Code pushed to `main` and the latest `main` builds successfully
+- [✅] Notebooks committed with **cleared outputs** (or use `nbstrip`)
+- [✅] `README` includes a demo screenshot / video link
+- [✅] Short project summary submitted on the hackathon portal
 
 ---
 
